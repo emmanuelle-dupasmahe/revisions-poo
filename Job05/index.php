@@ -39,6 +39,9 @@ echo "Données SQL brutes récupérées : ";
 var_dump($product_row);
 echo "<br>";
 
+
+Product::setPdo($pdo);
+echo "✅ Connexion PDO injectée dans la classe Product.<br><br>";
 // Hydratation de l'instance Product 
 
 
@@ -59,4 +62,20 @@ var_dump($product_instance);
 echo "<br>Nom du produit hydraté : " . $product_instance->getName() . "";
 echo "<br>Quantité en stock : " . $product_instance->getQuantity();
 echo "<br>Prix : " . number_format($product_instance->getPrice() / 100, 2) . " €";
+
+echo "<h2>Résolution de la Relation de Catégorie</h2>";
+
+$category_instance = $product_instance->getCategory();
+
+if ($category_instance) {
+    echo "✅ Catégorie associée récupérée avec succès !<br>";
+    echo "Nom de la Catégorie : " . $category_instance->getName() . " (ID: " . $category_instance->getId() . ")<br>";
+    echo "Description : " . $category_instance->getDescription() . "<br>";
+    
+    echo "<br><h3>Détails de l'instance Category :</h3>";
+    var_dump($category_instance);
+} else {
+    echo "❌ Impossible de trouver la catégorie associée (ID: " . $product_instance->getCategoryId() . ")";
+}
+
 ?>
