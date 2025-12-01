@@ -9,8 +9,8 @@ $product1 = new Product(
     2500, 
     "Un t-shirt 100% coton.",
     50,
-    new DateTime('2025-01-15 10:00:00'),
-    new DateTime('2025-01-15 10:00:00')
+    new DateTime('2025-11-15 10:00:00'),
+    new DateTime('2025-11-15 10:00:00')
 );
 
 echo "<h2>État Initial du Produit</h2>";
