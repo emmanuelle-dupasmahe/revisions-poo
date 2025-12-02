@@ -47,13 +47,13 @@ class Clothing extends AbstractProduct {
     
     public function create(): Clothing|false {
         // 1. Insertion dans la table 'product' (Parent)
-        $parent_result = parent::create();
+        $parent_result = parent::createProduct();
 
         if ($parent_result === false) {
             return false;
         }
 
-        $pdo = Product::getPdo(); 
+        $pdo = self::getPdo(); 
         if ($pdo === null) {
             return false;
         }
@@ -90,12 +90,12 @@ class Clothing extends AbstractProduct {
         }
         
         // Mise à jour du parent (table 'product')
-        $parent_result = parent::update();
+        $parent_result = parent::updateProduct();
         if ($parent_result === false) {
             return false;
         }
 
-        $pdo = Product::getPdo();
+        $pdo = self::getPdo();
         if ($pdo === null) {
             return false;
         }
@@ -127,7 +127,7 @@ class Clothing extends AbstractProduct {
 
     
     public function findOneById(int $id): Clothing|false {
-        $pdo = Product::getPdo();
+        $pdo = self::getPdo();
         if ($pdo === null) {
             throw new Exception("La connexion PDO n'a pas été initialisée.");
         }
@@ -149,7 +149,7 @@ class Clothing extends AbstractProduct {
         // Hydratation de l'instance en cours ($this)
         
         // Hydratation des propriétés du parent via l'objet temporaire
-        $tempProduct = Product::fromDatabaseRow($combined_row);
+        $tempProduct = self::fromDatabaseRow($combined_row);
         
         // Transfert des propriétés du parent
         $this->setId($tempProduct->getId() ?? 0); 
@@ -172,7 +172,7 @@ class Clothing extends AbstractProduct {
     }
 
     public static function findAll(): array {
-        $pdo = Product::getPdo();
+        $pdo = self::getPdo();
         if ($pdo === null) {
             throw new Exception("La connexion PDO n'a pas été initialisée.");
         }

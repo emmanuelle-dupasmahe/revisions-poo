@@ -47,7 +47,7 @@ class Electronic extends Product {
         }
 
         
-        $sql = "INSERT INTO electronique 
+        $sql = "INSERT INTO electronic 
                 (product_id, brand, warranty_fee) 
                 VALUES 
                 (:product_id, :brand, :warranty_fee)";
@@ -63,7 +63,7 @@ class Electronic extends Product {
             
             return $success ? $this : false;
         } catch (\PDOException $e) {
-            error_log("Erreur d'insertion electronique : " . $e->getMessage());
+            error_log("Erreur d'insertion electronic : " . $e->getMessage());
             return false;
         }
     }
@@ -87,7 +87,7 @@ class Electronic extends Product {
         }
         
         
-        $sql = "UPDATE electronique SET 
+        $sql = "UPDATE electronic SET 
                 brand = :brand, 
                 warranty_fee = :warranty_fee 
                 WHERE product_id = :product_id"; 
@@ -102,7 +102,7 @@ class Electronic extends Product {
             
             return $this; 
         } catch (\PDOException $e) {
-            error_log("Erreur de mise à jour electronique : " . $e->getMessage());
+            error_log("Erreur de mise à jour electronic : " . $e->getMessage());
             return false;
         }
     }
@@ -116,7 +116,7 @@ class Electronic extends Product {
 
         $sql = "SELECT p.*, e.brand, e.warranty_fee
                 FROM product p
-                JOIN electronique e ON p.id = e.product_id
+                JOIN electronic e ON p.id = e.product_id
                 WHERE p.id = :id";
         
         $stmt = $pdo->prepare($sql);
@@ -156,7 +156,7 @@ class Electronic extends Product {
         
         $sql = "SELECT p.*, e.brand, e.warranty_fee
                 FROM product p
-                JOIN electronique e ON p.id = e.product_id";
+                JOIN electronic e ON p.id = e.product_id";
                 
         $stmt = $pdo->query($sql);
         

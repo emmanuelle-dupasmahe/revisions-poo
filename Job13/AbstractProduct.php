@@ -18,7 +18,7 @@ abstract class AbstractProduct {
 
 
     /**
-     * Constructeur de la classe Product (avec tous les paramètres optionnels).
+     * Constructeur de la classe AbstractProduct (avec tous les paramètres optionnels).
      */
     public function __construct(
         ?int $id = null,
@@ -58,9 +58,9 @@ abstract class AbstractProduct {
     /**
      * Crée un objet Product à partir d'une ligne de base de données.
      */
-    public static function fromDatabaseRow(array $row): Product {
-        // Hydratation complète
-        return new Product(
+    public static function fromDatabaseRow(array $row): static{
+        // Utilise 'new static' pour instancier la classe enfant (Clothing/Electronic)
+        return new static(
             (int) $row['id'],
             $row['name'],
             explode(',', $row['photos']), 
@@ -73,91 +73,34 @@ abstract class AbstractProduct {
         );
     }
     
-    // Méthode findOneById 
-    /**
-     * Recherche un produit par ID dans la base de données et hydrate l'instance en cours.
-     * @param int $id L'ID du produit à rechercher.
-     * @return AbstractProduct|false L'instance AbstractProduct hydratée ou false si l'ID n'est pas trouvé.
-     */
-    public function findOneById(int $id): AbstractProduct|false {
-        if (self::$pdo === null) {
-            throw new Exception("La connexion PDO n'a pas été initialisée.");
-        }
+    abstract public function create(): AbstractProduct|false;
 
-        $stmt = self::$pdo->prepare("SELECT * FROM product WHERE id = :id");
-        $stmt->execute(['id' => $id]);
-        
-        $product_row = $stmt->fetch(PDO::FETCH_ASSOC);
+    abstract public function update(): AbstractProduct|false;
 
-        if (!$product_row) {
-            return false; 
-        }
-        
-        
-        
-        
-        $tempProduct = self::fromDatabaseRow($product_row);
-        
-       
-        $this->setId($tempProduct->getId() ?? 0); 
-        $this->setName($tempProduct->getName());
-        $this->setPhotos($tempProduct->getPhotos());
-        $this->setPrice($tempProduct->getPrice() ?? 0);
-        $this->setDescription($tempProduct->getDescription());
-        $this->setQuantity($tempProduct->getQuantity() ?? 0);
-        $this->setCreatedAt($tempProduct->getCreatedAt());
-        $this->setUpdatedAt($tempProduct->getUpdatedAt());
-        $this->setCategoryId($tempProduct->getCategoryId() ?? 0);
-        
-        return $this; 
-    } 
-    /**
-     * Récupère TOUS les produits de la base de données.
-     * Crée une instance de Product pour chaque ligne.
-     * @return AbstractProduct[] Tableau d'instances de la classe AbstractProduct.
-     */
-    public static function findAll(): array {
-        if (self::$pdo === null) {
-            throw new Exception("La connexion PDO n'a pas été initialisée.");
-        }
+    abstract public function findOneById(int $id): AbstractProduct|false;
 
-        $products = [];
-        
-        // Requête pour récupérer toutes les lignes de la table 'product'
-        $stmt = self::$pdo->query("SELECT * FROM product");
-        
-        while ($product_row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $products[] = self::fromDatabaseRow($product_row);
-        }
+    abstract public static function findAll(): array;
 
-        return $products;
-    }
-
-    /**Pour créer un produit dans la base de données */
-    
-    public function create(): AbstractProduct|false {
+    protected function createProduct(): AbstractProduct|false {
         if (self::$pdo === null) {
             throw new Exception("La connexion PDO n'a pas été initialisée.");
         }
         
-        // Assurez-vous que les champs non-nullables dans la DB sont définis
         if ($this->name === null || $this->price === null || $this->category_id === null) {
             return false;
         }
 
         $sql = "INSERT INTO product 
-                (category_id, name, photos, price, description, quantity) 
+                (category_id, name, photos, price, description, quantity, createdAt, updatedAt) 
                 VALUES 
-                (:category_id, :name, :photos, :price, :description, :quantity)";
+                (:category_id, :name, :photos, :price, :description, :quantity, NOW(), NOW())";
         
         try {
             $stmt = self::$pdo->prepare($sql);
             
-            // Exécution de la requête avec les données de l'instance
             $success = $stmt->execute([
                 'category_id' => $this->category_id,
                 'name'        => $this->name,
-                // Les photos doivent être converties en chaîne de caractères pour la DB (séparées par des virgules)
                 'photos'      => implode(',', $this->photos), 
                 'price'       => $this->price,
                 'description' => $this->description,
@@ -165,35 +108,25 @@ abstract class AbstractProduct {
             ]);
 
             if ($success) {
-                
                 $new_id = self::$pdo->lastInsertId();
-                $this->setId((int) $new_id);
-                
-        
-                
+                $this->id = (int) $new_id;
                 return $this; 
             } else {
                 return false;
             }
         } catch (\PDOException $e) {
-            
             error_log("Erreur d'insertion de produit : " . $e->getMessage());
             return false;
         }
     }
-
-    //fonction update pour changer une ligne de la classe Product
-    public function update(): AbstractProduct|false {
-        if (self::$pdo === null) {
-            throw new Exception("La connexion PDO n'a pas été initialisée.");
-        }
-        
-        // La mise à jour n'est possible que si l'instance possède un ID (si elle existe en DB)
-        if ($this->id === null) {
-            error_log("Tentative de mise à jour d'un produit sans ID.");
+    
+    /**
+     * Met à jour la partie "Product" dans la DB. Utilisé par les méthodes update() des classes enfants.
+     */
+    protected function updateProduct(): AbstractProduct|false {
+        if ($this->id === null || self::$pdo === null) {
             return false;
         }
-
         
         $sql = "UPDATE product SET 
                 category_id = :category_id, 
@@ -208,9 +141,8 @@ abstract class AbstractProduct {
         try {
             $stmt = self::$pdo->prepare($sql);
             
-            // Exécution de la requête avec les données de l'instance
             $success = $stmt->execute([
-                'id'          => $this->id, // L'ID est utilisé pour trouver la ligne à modifier
+                'id'          => $this->id,
                 'category_id' => $this->category_id,
                 'name'        => $this->name,
                 'photos'      => implode(',', $this->photos), 
@@ -220,16 +152,8 @@ abstract class AbstractProduct {
             ]);
 
             if ($success) {
-                
-                $this->setUpdatedAt(new DateTime());
-                
-                
-                if ($stmt->rowCount() > 0) {
-                    return $this; 
-                } else {
-                   
-                    return $this; 
-                }
+                $this->updatedAt = new DateTime();
+                return $this; 
             } else {
                 return false;
             }
@@ -238,7 +162,6 @@ abstract class AbstractProduct {
             return false;
         }
     }
-
     
     // les getters
 
