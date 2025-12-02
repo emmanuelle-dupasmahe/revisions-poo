@@ -1,7 +1,7 @@
 <?php
 
 // La classe Electronic hérite de la classe Product
-class Electronic extends Product {
+class Electronic extends AbstractProduct {
     
     
     private ?string $brand;

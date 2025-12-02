@@ -2,7 +2,7 @@
 
 
 // La classe Clothing est une enfant de la classe Product
-class Clothing extends Product {
+class Clothing extends AbstractProduct {
     
     private ?string $size;
     private ?string $color;
