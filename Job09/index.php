@@ -4,6 +4,8 @@ require_once 'Product.php';
 require_once 'Category.php';
 
 
+//connexion BDD
+
 $host = 'localhost';
 $db   = 'draft-shop'; 
 $user = 'root'; 
@@ -19,21 +21,52 @@ $options = [
 
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
-     echo "✅ Connexion à la base de données réussie.<br><br>";
+     echo "✅ Connexion à la base de données réussie.<br>";
 } catch (\PDOException $e) {
      die("❌ Erreur de connexion : " . $e->getMessage());
 }
 
 
+// injection de la dépendance PDO
 
 Product::setPdo($pdo);
 Category::setPdo($pdo); 
-echo "✅ Connexion PDO injectée dans Product et Category.<br>";
+echo "✅ Connexion PDO injectée dans Product et Category.<br><br>";
 
-echo "<h2>Récupération de tous les produits</h2>";
+
+
+// création et insertion
+echo "<h2>Création et insertion d'un nouveau produit (create)</h2>";
+
+$new_product = new Product();
+$new_product->setName("Clé USB 128Go");
+$new_product->setPrice(1599);
+$new_product->setDescription("Clé USB 3.0 ultra-rapide.");
+$new_product->setQuantity(500);
+$new_product->setPhotos(['usb_1.jpg', 'usb_2.jpg']);
+$new_product->setCategoryId(3); 
+
+echo "Tentative d'insertion du produit :  " . $new_product->getName() . " (ID actuel: " . ($new_product->getId() ?? 'NULL') . ")<br>";
+
+// Appel de la méthode create()
+$result_create = $new_product->create();
+
+if ($result_create !== false) {
+    echo "✅ Insertion réussie ! <br>";
+    echo "ID généré par la base de données : " . $new_product->getId() . "<br>";
+    echo "Vérification : l'objet est maintenant hydraté avec l'ID.<br>";
+    var_dump($new_product);
+} else {
+    echo "❌ Échec de l'insertion du produit.";
+}
+
+echo "<hr>";
+
+
+// récupération de tous les produits
+echo "<h2>Récupération de tous les produits (findAll)</h2>";
 
 try {
-    // Appel de la méthode statique
     $all_products = Product::findAll();
 
     if (empty($all_products)) {
@@ -43,35 +76,28 @@ try {
 
         echo "<h3>Liste des produits hydratés :</h3>";
         
-        // Affichage des informations de chaque objet Product
         foreach ($all_products as $product) {
-            echo "Produit ID " . $product->getId() . ": " . $product->getName() . " (Prix: " . number_format($product->getPrice() / 100, 2) . " €)<br>";
+            echo "Produit ID " . $product->getId() . " : " . $product->getName() . " (Prix: " . number_format($product->getPrice() / 100, 2) . " €)<br>";
         }
-        
-        echo "<br>Vérification du type du tableau : ";
-        var_dump($all_products);
     }
 } catch (Exception $e) {
     echo "❌ Erreur lors de l'appel de findAll() : " . $e->getMessage();
 }
 
-//Recherche et Hydratation d'un Produit Spécifique (findOneById)
+echo "<hr>";
 
+
+// recherche  (findOneById + getCategory) 
 $product_id_to_find = 7;
-echo "<h2>Recherche du produit ID {$product_id_to_find} </h2>";
+echo "<h2>Recherche du produit ID {$product_id_to_find} (findOneById)</h2>";
 
-// Créer une instance vide (grâce au constructeur optionnel)
 $product7 = new Product(); 
-
-// Hydrater l'instance avec findOneById()
 $result = $product7->findOneById($product_id_to_find);
 
 if ($result !== false) {
     echo "✅ Produit ID {$product_id_to_find} trouvé et instance hydratée.<br>";
-    echo "Nom du produit : " . $product7->getName() . "<br>";
-    echo "ID Catégorie stocké : " . $product7->getCategoryId() . "<br>";
+    echo "Nom du produit : " . $product7->getName() . "**<br>";
     
-    // Utilisation de la relation produit -> catégorie
     echo "<h3>Quelle est sa catégorie ?</h3>";
     $category_from_product = $product7->getCategory();
     
@@ -84,16 +110,15 @@ if ($result !== false) {
     echo "❌ Produit ID {$product_id_to_find} non trouvé dans la base de données.<br>";
 }
 
+echo "<hr>";
 
 
-
-//Recherche et Produits d'une Catégorie (getProducts)
-
+// Récupération des prdoduits d'une catégorie
 $category_id_to_fetch = 1;
 
-// Récupérer la Catégorie 
-echo "<h2>Récupération des produits de la catégorie ID {$category_id_to_fetch}</h2>";
+echo "<h2>Récupération des produits de la catégorie ID {$category_id_to_fetch} (getProducts)</h2>";
 
+// Récupérer la Catégorie (Hydratation Manuelle)
 $stmt_cat = $pdo->prepare("SELECT * FROM category WHERE id = :id");
 $stmt_cat->execute(['id' => $category_id_to_fetch]);
 $category_row = $stmt_cat->fetch(PDO::FETCH_ASSOC);
@@ -123,11 +148,7 @@ if (empty($products_list)) {
     echo "<h3>Détails des produits trouvés :</h3>";
     
     foreach ($products_list as $product) {
-        // Chaque élément est une instance de la classe Product !
-        echo "Produit ID " . $product->getId() . " : " . $product->getName() . " (Stock: " . $product->getQuantity() . ")<br>";
+        echo "Produit ID **" . $product->getId() . "** : " . $product->getName() . " (Stock: " . $product->getQuantity() . ")<br>";
     }
-    
-    echo "<br>Vérification du premier élément : ";
-    var_dump($products_list[0]);
 }
 ?>

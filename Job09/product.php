@@ -129,6 +129,54 @@ class Product {
         return $products;
     }
 
+    /**Pour créer un produit dans la base de données */
+    
+    public function create(): Product|false {
+        if (self::$pdo === null) {
+            throw new Exception("La connexion PDO n'a pas été initialisée.");
+        }
+        
+        // Assurez-vous que les champs non-nullables dans la DB sont définis
+        if ($this->name === null || $this->price === null || $this->category_id === null) {
+            return false;
+        }
+
+        $sql = "INSERT INTO product 
+                (category_id, name, photos, price, description, quantity) 
+                VALUES 
+                (:category_id, :name, :photos, :price, :description, :quantity)";
+        
+        try {
+            $stmt = self::$pdo->prepare($sql);
+            
+            // Exécution de la requête avec les données de l'instance
+            $success = $stmt->execute([
+                'category_id' => $this->category_id,
+                'name'        => $this->name,
+                // Les photos doivent être converties en chaîne de caractères pour la DB (séparées par des virgules)
+                'photos'      => implode(',', $this->photos), 
+                'price'       => $this->price,
+                'description' => $this->description,
+                'quantity'    => $this->quantity,
+            ]);
+
+            if ($success) {
+                
+                $new_id = self::$pdo->lastInsertId();
+                $this->setId((int) $new_id);
+                
+        
+                
+                return $this; 
+            } else {
+                return false;
+            }
+        } catch (\PDOException $e) {
+            
+            error_log("Erreur d'insertion de produit : " . $e->getMessage());
+            return false;
+        }
+    }
     
     // les getters
 
