@@ -95,4 +95,64 @@ $stock_chaining = $shirt->addStocks(5)
                         ->removeStocks(2)
                         ->addStocks(10);
                         
-echo "Stock après chaînage (+5, -2, +10): " . $stock_chaining->getQuantity() . " unités\n";
+echo "Stock après chaînage (+5, -2, +10): " . $stock_chaining->getQuantity() . " unités<br>";
+
+echo "<br><br>";
+echo "<br><br>";
+
+$tv = new Electronic(
+    id: 202, 
+    name: 'TV 4K OLED', 
+    price: 99900, 
+    quantity: 15,
+    description: 'Smart TV dernière génération',
+    category_id: 2,
+    brand: 'X-Tech',
+    warranty_fee: 10000 
+);
+
+echo "État Initial (Electronic) <br>";
+echo "Article: " . $tv->getName() . "<br>";
+echo "Marque: " . $tv->getBrand() . "<br>";
+echo "Stock initial: " . $tv->getQuantity() . " unités <br>";
+echo "<br><br>";
+
+
+
+echo "Test de addStocks() (Electronic) <br>";
+$stock_added = 10;
+$tv->addStocks($stock_added);
+
+echo "Ajout de $stock_added unités. Nouveau stock: " . $tv->getQuantity() . " unités\n";
+echo "<br><br>";
+
+
+
+echo "Test de removeStocks() (Electronic) <br>";
+$stock_removed = 5;
+$tv->removeStocks($stock_removed);
+
+echo "Retrait de $stock_removed unités. Nouveau stock: " . $tv->getQuantity() . " unités\n";
+echo "<br><br>";
+
+
+// --- 3. Test de la Sécurité (éviter le stock négatif) ---
+echo "Test de Sécurité (Retrait excessif) (Electronic)<br>";
+$stock_actuel = $tv->getQuantity(); 
+$retrait_excessif = 50;
+
+echo "Tentative de retirer $retrait_excessif unités (Stock actuel: $stock_actuel)<br>";
+$tv->removeStocks($retrait_excessif);
+
+echo "Stock final après retrait excessif: " . $tv->getQuantity() . " unités <br>"; 
+
+
+echo "<br>";
+echo "Test de Chaînage (Electronic)<br>";
+$tv_chaining = $tv->addStocks(8)
+                  ->removeStocks(3);
+                       
+echo "Stock après chaînage (+8, -3): " . $tv_chaining->getQuantity() . " unités <br>";
+
+
+?>
